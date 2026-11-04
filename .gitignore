@@ -1,0 +1,10 @@
+infra/.env
+@"
+.venv/
+__pycache__/
+*.pyc
+infra/.env
+.env
+*.parquet
+.DS_Store
+"@ | Set-Content .gitignore

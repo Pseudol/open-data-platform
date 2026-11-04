@@ -1,0 +1,63 @@
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.10.2
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    WAREHOUSE_HOST: postgres
+    WAREHOUSE_DB: warehouse
+    POSTGRES_USER: ${POSTGRES_USER}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    MINIO_ENDPOINT: http://minio:9000
+    MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+    MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+  volumes:
+    - ../orchestration/dags:/opt/airflow/dags
+    - ../ingestion:/opt/airflow/ingestion
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      retries: 10
+
+  minio:
+    image: docker.io/pgsty/silo:RELEASE.2026-09-16T00-00-00Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [miniodata:/data]
+
+  airflow-init:
+    <<: *airflow-common
+    command: >
+      bash -c "airflow db migrate &&
+      airflow users create --username admin --password admin
+      --firstname Admin --lastname User --role Admin --email admin@example.com"
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports: ["8080:8080"]
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+
+volumes:
+  pgdata:
+  miniodata:
