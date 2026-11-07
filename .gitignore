@@ -8,3 +8,4 @@ infra/.env
 *.parquet
 .DS_Store
 "@ | Set-Content .gitignore
+data/
