@@ -54,9 +54,7 @@ def read_aligned(asset, bounds, out_shape):
 
 def reflectance(asset, bounds, out_shape):
     dn = read_aligned(asset, bounds, out_shape).astype("float32")
-    rb = asset.extra_fields.get("raster:bands", [{}])[0]
-    scale, offset = rb.get("scale", 0.0001), rb.get("offset", 0.0)
-    ref = dn * scale + offset
+    ref = dn * 0.0001  # catalogue offset not applied: pixel values do not carry it
     ref[dn == 0] = np.nan  # 0 = nodata
     return ref
 
@@ -149,6 +147,15 @@ def main():
         print(f"{len(failures)} item(s) failed after retries, nothing written:")
         for f in failures:
             print("  ", f)
+        raise SystemExit(1)
+
+    bad = [
+        r for r in best.values()
+        if (pd.notna(r["ndvi_mean"]) and not -1 <= r["ndvi_mean"] <= 1)
+        or (pd.notna(r["gcvi_mean"]) and r["gcvi_mean"] < -1)
+    ]
+    if bad:
+        print(f"{len(bad)} rows outside valid index range, nothing written, e.g.:", bad[0])
         raise SystemExit(1)
 
     by_date = defaultdict(list)
