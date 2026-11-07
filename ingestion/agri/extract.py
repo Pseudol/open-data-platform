@@ -19,6 +19,7 @@ from rasterio.warp import transform_geom
 from rasterio.windows import bounds as window_bounds
 from rasterio.windows import from_bounds
 from shapely.geometry import mapping, shape
+import time
 
 STAC_URL = "https://earth-search.aws.element84.com/v1"
 FIELDS_PATH = Path(__file__).parent / "fields.geojson"

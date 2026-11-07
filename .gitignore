@@ -9,3 +9,4 @@ infra/.env
 .DS_Store
 "@ | Set-Content .gitignore
 data/
+.gitignore
