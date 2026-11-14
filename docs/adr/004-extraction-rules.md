@@ -1,6 +1,6 @@
 # ADR-004: Sentinel-2 extraction rules
 
-Status: accepted for processing-baseline 05.12 scenes (April 2026 verified).
+Status: accepted (verified on baselines 05.11, December 2025, and 05.12, April 2026)
 Early-season scenes (December 2025) verified.
 Date: 2026-11
 Relates to: ADR-003 (scope and grain)
@@ -25,14 +25,21 @@ explicit and reproducible.
    percentile 209-376 across 15 scenes, April 2026). Applying the catalogue
    offset produced negative reflectance and invalid indices, so it is not
    applied. See "Incident" below.
+
+   December 2025 (baseline 05.11) shows the same: 15 of 26 scenes have a red
+   5th percentile of 580-999. Scenes above 1000 were mostly cloud-covered
+   (median above 3,800), so the percentile test is inconclusive for them;
+   an end-to-end December run through the sanity gate is the authoritative check.
 4. **Indices.**
    - NDVI = (NIR - Red) / (NIR + Red)
    - GCVI = NIR / Green - 1
    - NDWI = (NIR - SWIR16) / (NIR + SWIR16), the Gao form, chosen for
      canopy water content. The McFeeters form (Green/NIR) is not used.
    Each field-date value is the mean over its valid pixels.
-5. **Overlapping scenes.** If several scenes cover a field on one day, the
-   scene with the most valid pixels is kept: one row per field per date.
+5. **Overlapping and reprocessed scenes.** Several scenes can cover a field on
+   one day, including reprocessed copies of the same tile (IDs ending _0 and
+   _1). The scene with the most valid pixels is kept, with ties broken by the
+   higher scene ID, so the choice is deterministic.
 6. **Quality is recorded, not hidden.** Every row stores total_pixels and
    valid_pixels. Fully clouded field-dates are kept with null indices, so
    downstream models decide what counts as usable.
@@ -70,7 +77,3 @@ fails loudly instead of producing plausible-looking bad data.
   keeps usable fields from cloudy scenes.
 - Trusting catalogue metadata blindly: rejected after the incident above.
 
-## Open item
-Scan December 2025 scenes (red 5th percentile expected well below 800). If
-the baseline differs and the pixel floor is near 1000, reflectance must
-depend on the processing baseline.

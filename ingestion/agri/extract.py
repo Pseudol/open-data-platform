@@ -140,7 +140,9 @@ def main():
                     print(f"FAIL {field['field_id']} {item.id}: {exc!r}")
                     continue
                 key = (row["field_id"], row["acq_date"])
-                if key not in best or row["valid_pixels"] > best[key]["valid_pixels"]:
+                if key not in best or (row["valid_pixels"], row["scene_id"]) > (
+                    best[key]["valid_pixels"], best[key]["scene_id"]
+                ):
                     best[key] = row
             print(f"done {field['field_id']}")
 
