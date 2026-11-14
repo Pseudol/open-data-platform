@@ -24,12 +24,7 @@ explicit and reproducible.
    baseline 05.12 scenes do not carry the matching +1000 offset (red 5th
    percentile 209-376 across 15 scenes, April 2026). Applying the catalogue
    offset produced negative reflectance and invalid indices, so it is not
-   applied. See "Incident" below.
-
-   December 2025 (baseline 05.11) shows the same: 15 of 26 scenes have a red
-   5th percentile of 580-999. Scenes above 1000 were mostly cloud-covered
-   (median above 3,800), so the percentile test is inconclusive for them;
-   an end-to-end December run through the sanity gate is the authoritative check.
+   applied. See "Incident" below. An end-to-end December run passed the sanity gate with NDVI 0.21 to 0.55.
 4. **Indices.**
    - NDVI = (NIR - Red) / (NIR + Red)
    - GCVI = NIR / Green - 1
