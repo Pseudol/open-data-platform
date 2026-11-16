@@ -12,7 +12,7 @@ from airflow.operators.bash import BashOperator
     default_args={"retries": 2, "retry_delay": timedelta(minutes=10)},
     tags=["agri", "raw"],
 )
-def agri_extract():
+def agri_raw_ingest():
     window = "--start {{ macros.ds_add(ds, -5) }} --end {{ ds }}"
     extract = BashOperator(
         task_id="extract_sentinel2",
@@ -25,4 +25,4 @@ def agri_extract():
     extract >> load
 
 
-agri_extract()
+agri_raw_ingest()
