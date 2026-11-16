@@ -27,8 +27,8 @@ flowchart LR
 |---|---|
 | Local platform (Postgres, S3-compatible storage, Airflow in Docker Compose) | Done |
 | Sentinel-2 field extractor (cloud masking, NDVI/GCVI/NDWI, retries, quality gate) | Done |
-| Airflow DAG writing Parquet to object storage | In progress |
-| Postgres load, dbt star schema, data tests, lineage docs | Planned |
+| Airflow DAG writing Parquet to object storage | Done |
+| Postgres load, dbt star schema, data tests, lineage docs | In Progress |
 | Power BI and open-source BI dashboards | Planned |
 | Finance product (streaming trades, regulatory and collections marts) | Planned |
 | Health product (DHIS2 indicators) | Planned |
@@ -84,6 +84,9 @@ All decisions are recorded as short ADRs in [`docs/adr/`](docs/adr/):
   ([ADR-002](docs/adr/002-object-storage-image.md)).
 - **Host library conflicts on Windows.** Extraction runs in a container so the
   result does not depend on the machine.
+- **Infrastructure Network.** Network faults during extraction fail the run 
+  without writing partial data (DNS pinned for the containers); storage preconditions 
+  are checked before any work starts.
 
 ## Data
 

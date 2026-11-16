@@ -20,6 +20,8 @@ from rasterio.windows import bounds as window_bounds
 from rasterio.windows import from_bounds
 from shapely.geometry import mapping, shape
 import time
+import os
+import io
 
 STAC_URL = "https://earth-search.aws.element84.com/v1"
 FIELDS_PATH = Path(__file__).parent / "fields.geojson"
@@ -113,13 +115,46 @@ def with_retries(fn, attempts=3, base_delay=5):
             print(f"retry {n}/{attempts - 1} after {exc!r}")
             time.sleep(base_delay * n)
 
+def make_s3_client():
+    import boto3
+
+    return boto3.client(
+        "s3",
+        endpoint_url=os.environ["MINIO_ENDPOINT"],
+        aws_access_key_id=os.environ["MINIO_ROOT_USER"],
+        aws_secret_access_key=os.environ["MINIO_ROOT_PASSWORD"],
+    )
+
+
+def ensure_bucket(s3, bucket="lake"):
+    names = [b["Name"] for b in s3.list_buckets()["Buckets"]]
+    if bucket not in names:
+        s3.create_bucket(Bucket=bucket)
+        print(f"created bucket {bucket}")
+
+
+def write_partition(df, d, sink, out):
+    if sink == "local":
+        out_dir = Path(out) / f"dt={d}"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(out_dir / "part-0.parquet", index=False)
+    else:
+        buf = io.BytesIO()
+        df.to_parquet(buf, index=False)
+        make_s3_client().put_object(
+            Bucket="lake", Key=f"raw/agri/dt={d}/part-0.parquet", Body=buf.getvalue()
+        )
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--start", required=True, help="YYYY-MM-DD")
     ap.add_argument("--end", required=True, help="YYYY-MM-DD")
     ap.add_argument("--out", default="data/raw/agri")
     ap.add_argument("--max-cloud", type=float, default=80)
+    ap.add_argument("--sink", choices=["local", "s3"], default="local")
     args = ap.parse_args()
+    if args.sink == "s3":
+        ensure_bucket(make_s3_client())
 
     client = Client.open(STAC_URL)
     best = {}
@@ -165,10 +200,9 @@ def main():
     for (_, d), row in best.items():
         by_date[d].append(row)
     for d, rows in sorted(by_date.items()):
-        out_dir = Path(args.out) / f"dt={d}"
-        out_dir.mkdir(parents=True, exist_ok=True)
-        pd.DataFrame(rows).sort_values("field_id").to_parquet(out_dir / "part-0.parquet", index=False)
-        print(f"wrote dt={d}: {len(rows)} fields")
+        df = pd.DataFrame(rows).sort_values("field_id")
+        write_partition(df, d, args.sink, args.out)
+        print(f"wrote dt={d}: {len(rows)} fields -> {args.sink}")
 
 
 if __name__ == "__main__":
