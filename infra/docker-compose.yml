@@ -1,9 +1,16 @@
 x-airflow-common: &airflow-common
-  image: apache/airflow:2.10.2
+  image: open-data-platform/airflow:2.10.2
+  dns:
+    - 8.8.8.8
+    - 1.1.1.1
+  build:
+    context: .
+    dockerfile: airflow.Dockerfile
   environment:
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
     WAREHOUSE_HOST: postgres
     WAREHOUSE_DB: warehouse
     POSTGRES_USER: ${POSTGRES_USER}
@@ -11,6 +18,7 @@ x-airflow-common: &airflow-common
     MINIO_ENDPOINT: http://minio:9000
     MINIO_ROOT_USER: ${MINIO_ROOT_USER}
     MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    
   volumes:
     - ../orchestration/dags:/opt/airflow/dags
     - ../ingestion:/opt/airflow/ingestion
