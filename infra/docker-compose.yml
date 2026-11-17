@@ -66,6 +66,22 @@ services:
     <<: *airflow-common
     command: scheduler
 
+  dbt:
+    build:
+      context: .
+      dockerfile: dbt.Dockerfile
+    volumes:
+      - ../dbt:/usr/app/dbt
+    environment:
+      DBT_PG_HOST: postgres
+      DBT_PG_USER: ${POSTGRES_USER}
+      DBT_PG_PASSWORD: ${POSTGRES_PASSWORD}
+      DBT_PROFILES_DIR: /usr/app/dbt
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["tools"]
+
 volumes:
   pgdata:
   miniodata:
