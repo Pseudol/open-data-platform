@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: stg_agri_field_index
+    description: >
+      Cleaned Sentinel-2 field observations, one row per field per date.
+      Renames raw columns, derives valid_pixel_share, and flags each row
+      is_usable when at least min_valid_share of pixels survived the cloud mask.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [field_id, observation_date]
+    columns:
+      - name: field_id
+        data_tests: [not_null]
+      - name: observation_date
+        data_tests: [not_null]

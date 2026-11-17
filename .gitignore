@@ -10,3 +10,6 @@ infra/.env
 "@ | Set-Content .gitignore
 data/
 .gitignore
+dbt/dbt_packages/
+dbt/target/
+dbt/logs/

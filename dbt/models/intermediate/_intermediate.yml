@@ -1,0 +1,8 @@
+version: 2
+
+models:
+  - name: int_date_season
+    description: >
+      Date spine with the maize season rule applied via the
+      maize_season_start_year macro. Months 11 to 12 belong to the season
+      starting that year, months 1 to 6 to the season that started the year before.

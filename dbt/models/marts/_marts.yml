@@ -1,0 +1,77 @@
+version: 2
+
+models:
+  - name: dim_field
+    description: One row per monitored maize field.
+    columns:
+      - name: field_key
+        data_tests: [unique, not_null]
+      - name: field_id
+        data_tests: [unique, not_null]
+
+  - name: dim_date
+    description: >
+      One row per calendar day, labelled with its November to June maize season
+      (named for the starting year) or Off-season.
+    columns:
+      - name: date_key
+        data_tests: [unique, not_null]
+      - name: full_date
+        data_tests: [unique, not_null]
+
+  - name: fct_field_index
+    description: >
+      Fact table at the grain of one row per field per observation date, holding
+      NDVI, GCVI and NDWI means and quality measures. Unusable observations are kept
+      and flagged, so dashboards filter on is_usable.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [field_key, date_key]
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "valid_pixels <= total_pixels"
+    columns:
+      - name: field_index_key
+        data_tests: [unique, not_null]
+      - name: field_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_field')
+                field: field_key
+      - name: date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: valid_pixel_share
+        description: >
+          The fraction of a field’s pixels that gave a trustworthy 
+          reading on a given date.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: ndvi_mean
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: -1
+                max_value: 1
+      - name: ndwi_mean
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: -1
+                max_value: 1
+      - name: gcvi_mean
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: -1
+                max_value: 20
